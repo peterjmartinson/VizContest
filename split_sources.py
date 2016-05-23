@@ -7,20 +7,27 @@ This is a temporary script file.
 
 import csv
 
-inFile = open('PJM_20160516_FLOWFEB.csv', 'r')
-ReadMe = csv.reader(inFile)
+with (open('PJM_20160516_FLOWFEB.csv', 'r')) as inFile:
+  ReadMe = csv.reader(inFile)
 
-names = []
-iterNames = iter(ReadMe)
-next(iterNames)
-for row in iterNames:
-  names.append(row[0])
+  names = []
+  next(ReadMe)
+  for row in ReadMe:
+    names.append(row[0])
 
 for name in set(names):
-  print(name)
+  outFileName = name + '.csv'
+  with(open(outFileName, 'w')) as outFile:
+    outWriter = csv.writer(outFile)
+    with (open('PJM_20160516_FLOWFEB.csv', 'r')) as inFile:
+      ReadMe = csv.reader(inFile)
+      outWriter.writerow(next(ReadMe))
+      for row in ReadMe:
+        if row[0] == name:
+          outWriter.writerow(row)
+#fin
 
 
 
 
-inFile.close()
 
