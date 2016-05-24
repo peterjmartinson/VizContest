@@ -1,0 +1,377 @@
+<!-- methinks that sankey.js is going into and changing workingGraph.
+     See if you can solve this problem!! -->
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+<title>SANKEY Experiment</title>
+<style>
+
+.node rect {
+  cursor: move;
+  fill-opacity: .9;
+  shape-rendering: crispEdges;
+}
+
+.node text {
+  pointer-events: none;
+  text-shadow: 0 1px 0 #fff;
+}
+
+.link {
+  fill: none;
+  stroke: #000;
+  stroke-opacity: .2;
+}
+
+.link:hover {
+  stroke-opacity: .5;
+}
+
+</style>
+
+<script>
+// Method for removing duplicates from an array 
+Array.prototype.removeDuplicateDates = function() {
+  var u = [];
+	
+	for ( var i = 0; i < this.length; i++ ) {
+	  var current = new Date(this[i]);
+		if ( u.map(Number).indexOf(+current) < 0 ) {
+		  u.push(current);
+		}
+	}
+	return u;
+}
+</script>
+
+</head>
+<body>
+
+<!--                                                         The Time Slider -->
+<p>
+  <input type="range" min="0" max="10" step="1" id="timeSlider">
+	<label for="timeSlider" 
+       style="display: inline-block; width: 240px; text-align: left">
+         time = <span id="timeSlider-value">…</span>
+  </label>
+  
+</p>
+<!--                                                                     PJM -->
+
+<p id="chart">
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="sankey.js"></script>
+<script>
+	
+var units = "Widgets";
+
+var margin = {top: 10, right: 10, bottom: 10, left: 10},
+    width = 700 - margin.left - margin.right,
+    height = 800 - margin.top - margin.bottom;
+
+var formatNumber = d3.format(",.0f"),    // zero decimal places
+    format = function(d) { return formatNumber(d) + " " + units; },
+    color = d3.scale.category20();
+
+// append the svg canvas to the page
+var svg = d3.select("#chart").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", 
+          "translate(" + margin.left + "," + margin.top + ")");
+
+// Set the sankey diagram properties
+var sankey = d3.sankey()
+    .nodeWidth(36)
+    .nodePadding(40)
+    .size([width, height]);
+
+var path = sankey.link();
+
+// load the data (using the timelyportfolio csv method)
+d3.csv("sankey4.csv", function(error, data) {
+  var index = [];  // Index array of distinct dates in the .csv file
+	
+  //set up graph in same style as original example but empty
+  graph =            {"nodes" : [], "links" : []};
+	var workingGraph = {"nodes" : [], "links" : []};
+	
+    data.forEach(function (d) {
+				graph.nodes.push({ "name": d.source });
+				graph.nodes.push({ "name": d.target });
+				graph.links.push({ "source": d.source,
+													 "target": d.target,
+													 "value": +d.value });
+				index.push(d.annum);
+     });
+
+     // return only the distinct / unique nodes
+     graph.nodes = d3.keys(d3.nest()
+       .key(function (d) { return d.name; })
+       .map(graph.nodes));
+		
+		// ===============================================\     PJM
+		index = index.removeDuplicateDates();
+
+		index.sort(function(d1, d2) {
+		  if (d1 > d2) return 1;
+			if (d1 < d2) return -1;
+			return 0;
+		});
+
+		var numEntries = index.length;
+		
+		// INITIALIZE: gives slider number of steps equal to number of lines in data
+		d3.select("#timeSlider").attr("max", numEntries - 1);
+    d3.select("#timeSlider").on("input", function() {
+			  console.log(workingGraph.links[0]);
+				update(+this.value, workingGraph);
+		});
+		// ===============================================/ END PJM
+		
+		// loop through each link replacing the text with its index from node
+     graph.links.forEach(function (d, i) {
+       graph.links[i].source = graph.nodes.indexOf(graph.links[i].source);
+       graph.links[i].target = graph.nodes.indexOf(graph.links[i].target);
+     });
+
+     //now loop through each nodes to make nodes an array of objects
+     // rather than an array of strings
+     graph.nodes.forEach(function (d, i) {
+       graph.nodes[i] = { "name": d };
+     });
+     console.log("data : " + data);
+     console.log("graph: " + graph.links.length);
+  
+	// ==========  Subset of JSON object with data for only one date ====\     PJM
+	
+//	workingGraph.nodes = graph.nodes;
+	workingGraph = initialize(Math.floor(numEntries/2));
+
+	// Everything up to here is static.
+	// Everything after gets updated.
+//	var currentDate = new Date ( index[annumVar] );
+//	var workingGraphIndex = 0;
+//	for ( var i = 0; i < data.length; i++ ) {
+//	  var testDate = new Date( data[i].annum );
+//		if ( testDate.getTime() == currentDate.getTime() ) {
+//		  workingGraph.links[workingGraphIndex] = graph.links[i];
+//			workingGraphIndex++;
+//		}
+//	}
+	// ==================================================================/ END PJM
+	  
+		sankey
+    .nodes(workingGraph.nodes)
+    .links(workingGraph.links)
+    .layout(32);
+
+// add in the links
+  var link = svg.append("g").selectAll(".link")
+      .data(workingGraph.links)
+    .enter().append("path")
+      .attr("class", "link")
+      .attr("d", path)
+      .style("stroke-width", function(d) { return Math.max(1, d.dy); })
+      .sort(function(a, b) { return b.dy - a.dy; });
+
+// add the link titles
+  link.append("title")
+        .text(function(d) {
+    		return d.source.name + " → " + 
+                d.target.name + "\n" + format(d.value); });
+
+// add in the nodes
+  var node = svg.append("g").selectAll(".node")
+      .data(workingGraph.nodes)
+    .enter().append("g")
+      .attr("class", "node")
+      .attr("transform", function(d) { 
+		  return "translate(" + d.x + "," + d.y + ")"; });
+
+// add the rectangles for the nodes
+  node.append("rect")
+      .attr("height", function(d) { return d.dy; })
+      .attr("width", sankey.nodeWidth())
+      .style("fill", function(d) { 
+		  return d.color = color(d.name.replace(/ .*/, "")); })
+      .style("stroke", function(d) { 
+		  return d3.rgb(d.color).darker(2); })
+    .append("title")
+      .text(function(d) { 
+		  return d.name + "\n" + format(d.value); });
+
+// add in the title for the nodes
+  node.append("text")
+      .attr("x", -6)
+      .attr("y", function(d) { return d.dy / 2; })
+      .attr("dy", ".35em")
+      .attr("text-anchor", "end")
+      .attr("transform", null)
+      .text(function(d) { return d.name; })
+    .filter(function(d) { return d.x < width / 2; })
+      .attr("x", 6 + sankey.nodeWidth())
+      .attr("text-anchor", "start");
+
+	
+	
+	
+function initialize(timeSlider, workingGraph) {
+    console.log("initialized: " + timeSlider);
+		
+		d3.select("#timeSlider-value").text(index[timeSlider].toDateString());
+		d3.select("#timeSlider").property("value", timeSlider);
+		
+		var currentDate = new Date ( index[timeSlider] ); // index[] is a pseudo-global
+		var workingData = [];
+		for ( var i = 0; i < data.length; i++) {
+			var testDate = new Date(data[i].annum);
+			
+			if ( testDate.getTime() == currentDate.getTime() ) {
+				var tempData = data[i];
+				workingData.push(tempData);
+			}
+		};
+		
+		var workingGraph = {"nodes" : [], "links" : []};
+		workingGraph.nodes = graph.nodes;
+	
+	  var workingGraphIndex = 0;
+	  for ( var i = 0; i < data.length; i++ ) {
+	    var testDate = new Date( data[i].annum );
+		  if ( testDate.getTime() == currentDate.getTime() ) {
+		    workingGraph.links[workingGraphIndex] = graph.links[i];
+			  workingGraphIndex++;
+		  }
+	  }
+		return workingGraph;
+}
+
+	
+	
+	
+	
+// ============================================================================= function for updating the graph	
+	function update(timeSlider,workingGraph) { 
+    console.log("graph.links.length: " + graph.links.length);
+    console.log(index[timeSlider]);
+		console.log("a " + workingGraph.links[0]);
+
+		workingGraph.links.length = 0;
+
+		console.log("b " + workingGraph.links[0]);
+		d3.select("#timeSlider-value").text(index[timeSlider].toDateString());
+		d3.select("#timeSlider").property("value", timeSlider);
+		
+		var currentDate = new Date ( index[timeSlider] ); // index[] is a pseudo-global
+		var workingData = [];
+		for ( var i = 0; i < data.length; i++) {
+			var testDate = new Date(data[i].annum);
+			
+			if ( testDate.getTime() == currentDate.getTime() ) {
+				var tempData = data[i];
+				workingData.push(tempData);
+			}
+		};
+		
+		//var workingGraph = {"nodes" : [], "links" : []};
+		//workingGraph.nodes = graph.nodes;
+	
+	  var workingGraphIndex = 0;
+	  for ( var i = 0; i < data.length; i++ ) {
+	    var testDate = new Date( data[i].annum );
+		  if ( testDate.getTime() == currentDate.getTime() ) {
+		    workingGraph.links[workingGraphIndex] = graph.links[i];
+			  workingGraphIndex++;
+		  }
+	  }
+		console.log(workingGraph.links[0]);
+		////////////////////////////////////////==================================== From here, everything doesn't work!!
+		sankey
+    .nodes(workingGraph.nodes)
+    .links(workingGraph.links)
+    .layout(32);
+
+		// add in the links
+		svg.selectAll("path")
+		  .data(workingGraph.links)
+			//.attr("class", "link")
+			//.attr("d", path)
+			.style("stroke-width", function(d) { return Math.max(1, d.dy); })
+			.sort(function(a, b) { return b.dy - a.dy; });
+			
+		svg.selectAll("title")
+		  .data(workingGraph.links);
+//			.text(function(d) {
+//    		return d.source.name + " → " + 
+//                d.target.name + "\n" + format(d.value); });
+
+// add in the nodes
+  //var node = svg.append("g").selectAll(".node")
+//  node.selectAll(".node")
+//  	.data(workingGraph.nodes)
+    //.enter().append("g")
+      //.attr("class", "node")
+//      .attr("transform", function(d) { 
+//		  return "translate(" + d.x + "," + d.y + ")"; })
+    //.call(d3.behavior.drag()
+      //.origin(function(d) { return d; })
+      //.on("dragstart", function() { 
+		  //this.parentNode.appendChild(this); })
+      //.on("drag", dragmove));
+
+// add the rectangles for the nodes
+  //node.append("rect")
+  node.selectAll("rect")
+      .data(workingGraph.nodes)
+    	.attr("height", function(d) { return d.dy; })
+      .attr("width", sankey.nodeWidth());
+//      .style("fill", function(d) { 
+//		  return d.color = color(d.name.replace(/ .*/, "")); })
+//      .style("stroke", function(d) { 
+//		  return d3.rgb(d.color).darker(2); });
+//
+//  node.selectAll("title")
+//      .text(function(d) { 
+//		  return d.name + "\n" + format(d.value); });
+//
+//// add in the title for the nodes
+////  node.append("text")
+  node.selectAll("text")
+      .attr("x", -6)
+      .attr("y", function(d) { return d.dy / 2; })
+      .attr("dy", ".35em")
+      .attr("text-anchor", "end")
+      .attr("transform", null)
+      .text(function(d) { return d.name; })
+    .filter(function(d) { return d.x < width / 2; })
+      .attr("x", 6 + sankey.nodeWidth())
+      .attr("text-anchor", "start");
+/*
+// the function for moving the nodes
+  function dragmove(d) {
+    d3.select(this).attr("transform", 
+        "translate(" + d.x + "," + (
+                d.y = Math.max(0, Math.min(height - d.dy, d3.event.y))
+            ) + ")");
+    sankey.relayout();
+    link.attr("d", path);
+  }
+		
+		
+		// don't append a new element, just reposition the old one!
+		svg.selectAll("circle")
+			.data(workingData)
+			.attr("cx", function(d) { return x(d.date) })
+			.attr("cy", function(d) { return y(d.close) });
+*/
+	}
+});
+
+</script>
+
+</body>
+</html>

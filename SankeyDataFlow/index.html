@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+<title>SANKEY Experiment</title>
+
+  <link rel="stylesheet" href="css/D3Sankey.css">
+  <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+  <script src="js/sankey.js"></script>
+  <script src="js/utilities.js"></script>
+</head>
+
+<body>
+  <p>
+    <input type="range" min="0" max="10" step="1" id="timeSlider">
+    <label for="timeSlider" 
+         style="display: inline-block; width: 240px; text-align: left">
+           time = <span id="timeSlider-value">...</span>
+    </label>
+  </p>
+
+  <p id="chart">...</p>
+  <script src="js/drawSankey.js"></script>
+
+</body>
+</html>
