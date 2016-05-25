@@ -4,22 +4,31 @@
 <title>SANKEY Experiment</title>
 
   <link rel="stylesheet" href="css/D3Sankey.css">
-  <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-  <script src="js/sankey.js"></script>
-  <script src="js/utilities.js"></script>
 </head>
 
-<body>
+<body ng-app="dateSlider" ng-controller="dateSliderController">
   <p>
-    <input type="range" min="0" max="10" step="1" id="timeSlider">
-    <label for="timeSlider" 
-         style="display: inline-block; width: 240px; text-align: left">
-           time = <span id="timeSlider-value">...</span>
-    </label>
+    <input type="range" id="Slider" class="date-slider"
+      min="0" max="{{sliderIndexMax}}" step="1"
+      ng-model="sliderIndex">
+    <p>time: {{ (outputData|filter: dateArray[sliderIndex]).length }} of {{
+    outputData.length }} total dates</p>
+    <!--label for="timeSlider" 
+         style="display: inline-block;
+                width: 240px;
+                text-align: left">
+      time = <span id="timeSlider-value">...</span>
+    </label-->
   </p>
 
   <p id="chart">...</p>
+  <script src="js/vendor/angular.min.js"></script>
+  <script src="js/vendor/material.min.js"></script>
+  <script src="js/vendor/papaparse.min.js"></script>
+  <script src="js/utilities.js"></script>
+  <script src="js/angular.js"></script>
+  <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+  <script src="js/sankey.js"></script>
   <script src="js/drawSankey.js"></script>
-
 </body>
 </html>
