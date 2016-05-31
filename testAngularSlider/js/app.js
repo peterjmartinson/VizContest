@@ -328,7 +328,7 @@ var results =
 //}]);
   /*___________________ CONTROLLER _____________________*/
 
-  app.controller('dateSliderController', function ($scope, testFactory) {
+  app.controller('dateSliderController', ['$scope', function ($scope){//, testFactory) {
     
 //    testFactory.getData().then(function(results) {
       
@@ -336,12 +336,12 @@ var results =
           dateIndex,
           workingData = [];
 
-          for (i=0; i<results; i++) {
+          for (i=0; i<results.length; i++) {
             workingData.push({
-              source : results.data[i].source,
-              target : results.data[i].target,
-              value  : results.data[i].value,
-              annum  : Date.parse(results.data[i].annum)
+              source : results[i].source,
+              target : results[i].target,
+              value  : results[i].value,
+              annum  : Date.toString(results[i].annum)
             });
           }
 
@@ -363,7 +363,7 @@ var results =
     console.log('sliderIndex   : ' + $scope.sliderIndex);
     console.log('sliderIndexMax: ' + $scope.sliderIndexMax);
 //    });
-  });
+  }]);
 
   /*_____________________ DIRECTIVES ____________________*/
   
