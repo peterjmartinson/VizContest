@@ -337,12 +337,17 @@ var results =
           workingData = [];
 
           for (i=0; i<results.length; i++) {
+            console.log('i: ' + i);
             workingData.push({
               source : results[i].source,
               target : results[i].target,
               value  : results[i].value,
-              annum  : Date.toString(results[i].annum)
+              annum  : new Date(results[i].annum)
             });
+            console.log('source: ' + workingData[i].source);
+            console.log('target: ' + workingData[i].target);
+            console.log('value: ' + workingData[i].value);
+            console.log('annum: ' + workingData[i].annum); // this is the problem spot - same date each time
           }
 
     dateIndex = workingData.uniqueDates().sort();
@@ -356,7 +361,7 @@ var results =
     $scope.sliderIndex    = 0;
     $scope.sliderIndexMax = dateIndex.length - 1;
 
-    console.log('outputData    : ' + $scope.outputData);
+    console.log('outputData    : ' + $scope.outputData[0]);
     console.log('dateArray     : ' + $scope.dateArray);
     console.log('minDate       : ' + $scope.minDate);
     console.log('maxDate       : ' + $scope.maxDate);
